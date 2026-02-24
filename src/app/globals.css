@@ -1,92 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  * {
-    box-sizing: border-box;
-  }
+:root {
+  --sidebar: #171717;
+  --main: #212121;
+  --input: #303030;
+  --user-bubble: #303030;
+  --accent: #7c6fe6;
+  --accent-glow: rgba(124, 111, 230, 0.25);
+  --text-primary: #e8e8e8;
+  --text-secondary: #8e8e8e;
+  --text-tertiary: #666;
+  --border: rgba(255,255,255,0.08);
+  --border-hover: rgba(255,255,255,0.14);
+}
 
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
     margin: 0;
     padding: 0;
-    background-color: rgb(17 24 39);
-    color: rgb(255 255 255);
+    background: #212121;
+    color: #e8e8e8;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+}
 
-  html {
-    scroll-behavior: smooth;
-  }
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }
+
+/* Keyframes */
+@keyframes cursorClick {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(0.75); }
+  100% { transform: scale(1); }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+  40% { transform: translateY(-5px); opacity: 1; }
+}
+
+@keyframes textCursorBlink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+@keyframes gradientOrb {
+  0%   { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+  50%  { transform: translate(-50%, -50%) scale(1.15); opacity: 0.7; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 @layer components {
-  .typing-cursor {
-    animation: blink 1s infinite;
+  .typing-dot {
+    animation: bounce 1.4s ease-in-out infinite;
   }
+  .typing-dot:nth-child(2) { animation-delay: 0.16s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.32s; }
 
-  @keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0; }
-  }
+  .text-cursor-blink { animation: textCursorBlink 0.8s infinite; }
+  .cursor-click-anim { animation: cursorClick 0.2s ease-out; }
+  .overlay-enter { animation: overlayIn 0.4s ease-out forwards; }
+  .reveal-card-enter { animation: fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.15s forwards; opacity: 0; }
 
-  /* Message animations */
-  .message-enter {
-    animation: messageSlideIn 0.3s ease-out;
-  }
-
-  @keyframes messageSlideIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Pulse animation for loading */
-  .pulse-dot {
-    animation: pulse 1.5s ease-in-out infinite;
-  }
-
-  .pulse-dot:nth-child(2) {
-    animation-delay: 0.1s;
-  }
-
-  .pulse-dot:nth-child(3) {
-    animation-delay: 0.2s;
-  }
-
-  @keyframes pulse {
-    0%, 80%, 100% {
-      transform: scale(0);
-      opacity: 0.5;
-    }
-    40% {
-      transform: scale(1);
-      opacity: 1;
-    }
+  .display-font {
+    font-family: 'Bricolage Grotesque', system-ui, sans-serif;
   }
 }
 
-/* Mobile responsive adjustments */
-@media (max-width: 768px) {
-  .sidebar-mobile {
-    transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out;
-  }
-
-  .sidebar-mobile.open {
-    transform: translateX(0);
-  }
-}
-
-/* Accessibility improvements */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

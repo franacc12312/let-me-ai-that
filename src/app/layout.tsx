@@ -9,18 +9,18 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Let Me AI That For You',
-  description: 'For all those questions that could have been asked to AI directly',
-  keywords: ['AI', 'assistant', 'questions', 'search', 'LMAITFY'],
+  title: 'Let Me ChatGPT That For You',
+  description: 'For all those questions that could have been asked to ChatGPT directly',
+  keywords: ['ChatGPT', 'AI', 'assistant', 'questions', 'search', 'LMGPTTFY'],
   openGraph: {
-    title: 'Let Me AI That For You',
-    description: 'For all those questions that could have been asked to AI directly',
+    title: 'Let Me ChatGPT That For You',
+    description: 'For all those questions that could have been asked to ChatGPT directly',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Let Me AI That For You',
-    description: 'For all those questions that could have been asked to AI directly',
+    title: 'Let Me ChatGPT That For You',
+    description: 'For all those questions that could have been asked to ChatGPT directly',
   },
 };
 
