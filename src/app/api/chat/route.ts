@@ -12,7 +12,6 @@ const requestLog = new Map<string, number[]>();
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
   const timestamps = requestLog.get(ip) ?? [];
-  // Keep only timestamps within the window
   const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
   if (recent.length >= RATE_LIMIT_MAX) {
     requestLog.set(ip, recent);
@@ -50,14 +49,60 @@ function getClient(): Anthropic {
 }
 
 // ---------------------------------------------------------------------------
-// Input validation
+// Input validation & origin check
 // ---------------------------------------------------------------------------
 const MAX_MESSAGE_LENGTH = 500;
+
+// ---------------------------------------------------------------------------
+// Content filter — reject obviously harmful queries before they hit the API
+// ---------------------------------------------------------------------------
+const BLOCKED_PATTERNS = [
+  // Violence / harm
+  /how to (make|build|create|construct|assemble) .*(bomb|explosive|weapon|poison|drug|meth)/i,
+  /how to (kill|murder|assassinate|hurt|harm|attack|torture)/i,
+  /how to (hack|ddos|dos|exploit|breach|crack) /i,
+  // CSAM / exploitation
+  /child\s*(porn|sex|abuse|exploit)/i,
+  /\b(csam|cp)\b/i,
+  /underage/i,
+  // Self-harm
+  /how to (commit suicide|kill myself|end my life)/i,
+  // Illegal activity
+  /how to (rob|steal from|break into|smuggle)/i,
+  /how to (forge|counterfeit|launder)/i,
+  // Doxxing / harassment
+  /find.*(address|phone|ssn|social security)/i,
+];
+
+function isBlockedContent(message: string): boolean {
+  return BLOCKED_PATTERNS.some((pattern) => pattern.test(message));
+}
+
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : null; // null = allow all (dev mode)
+
+function isOriginAllowed(req: NextRequest): boolean {
+  if (!ALLOWED_ORIGINS) return true; // not configured = allow all
+  const origin = req.headers.get('origin') ?? '';
+  const referer = req.headers.get('referer') ?? '';
+  return ALLOWED_ORIGINS.some(
+    (allowed) => origin.includes(allowed) || referer.includes(allowed),
+  );
+}
 
 // ---------------------------------------------------------------------------
 // POST handler
 // ---------------------------------------------------------------------------
 export async function POST(req: NextRequest) {
+  // Origin check — block external API calls in prod
+  if (!isOriginAllowed(req)) {
+    return NextResponse.json(
+      { error: 'Forbidden' },
+      { status: 403 },
+    );
+  }
+
   // Rate limiting
   const ip =
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
@@ -99,13 +144,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Content filter — block before it reaches Anthropic
+    if (isBlockedContent(message)) {
+      return NextResponse.json(
+        { error: 'This question cannot be answered.' },
+        { status: 400 },
+      );
+    }
+
     // Get Anthropic client (will throw if key missing)
     let client: Anthropic;
     try {
       client = getClient();
     } catch {
       return NextResponse.json(
-        { error: 'AI service is not configured. Please set ANTHROPIC_API_KEY.' },
+        { error: 'AI service is not configured.' },
         { status: 503 },
       );
     }
@@ -115,7 +168,7 @@ export async function POST(req: NextRequest) {
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1000,
       messages: [{ role: 'user', content: message.trim() }],
-      system: 'You are a helpful AI assistant. Answer questions concisely and helpfully.',
+      system: 'You are a helpful AI assistant on a public website. Answer questions concisely and helpfully. Refuse to answer questions about: making weapons/explosives/drugs, harming people or animals, illegal activities, hacking/exploiting systems, finding personal information about real people, or any content involving minors in harmful contexts. For refused queries, respond with a single short sentence declining.',
       stream: true,
     });
 
@@ -135,7 +188,6 @@ export async function POST(req: NextRequest) {
           }
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         } catch (err) {
-          // Send error event so the client knows something went wrong mid-stream
           const errorMsg =
             err instanceof Error ? err.message : 'Stream interrupted';
           controller.enqueue(
@@ -157,7 +209,6 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     console.error('Chat API error:', error);
 
-    // Handle Anthropic SDK errors
     if (error instanceof Anthropic.APIError) {
       if (error.status === 429) {
         return NextResponse.json(
@@ -167,16 +218,15 @@ export async function POST(req: NextRequest) {
       }
       if (error.status === 401) {
         return NextResponse.json(
-          { error: 'AI service authentication failed. Please check the API key.' },
+          { error: 'AI service authentication failed.' },
           { status: 503 },
         );
       }
-      // Billing / credit errors come as 400, deprecated models as 404
       if (error.status === 400 || error.status === 404) {
-        const msg =
-          (error.error as { error?: { message?: string } })?.error?.message ??
-          'AI service request failed';
-        return NextResponse.json({ error: msg }, { status: 502 });
+        return NextResponse.json(
+          { error: 'AI service request failed' },
+          { status: 502 },
+        );
       }
     }
 

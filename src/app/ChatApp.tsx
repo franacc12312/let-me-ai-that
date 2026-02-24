@@ -254,17 +254,17 @@ function renderMarkdown(text: string): React.ReactNode[] {
     // Headings
     const h1 = line.match(/^# (.+)$/);
     if (h1) {
-      elements.push(<div key={`h-${i}`} style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: '12px 0 6px' }}>{h1[1]}</div>);
+      elements.push(<div key={`h-${i}`} style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: '12px 0 6px' }}>{renderInline(h1[1], i)}</div>);
       continue;
     }
     const h2 = line.match(/^## (.+)$/);
     if (h2) {
-      elements.push(<div key={`h-${i}`} style={{ fontSize: '16px', fontWeight: 600, color: '#fff', margin: '10px 0 4px' }}>{h2[1]}</div>);
+      elements.push(<div key={`h-${i}`} style={{ fontSize: '16px', fontWeight: 600, color: '#fff', margin: '10px 0 4px' }}>{renderInline(h2[1], i)}</div>);
       continue;
     }
     const h3 = line.match(/^### (.+)$/);
     if (h3) {
-      elements.push(<div key={`h-${i}`} style={{ fontSize: '15px', fontWeight: 600, color: '#fff', margin: '8px 0 4px' }}>{h3[1]}</div>);
+      elements.push(<div key={`h-${i}`} style={{ fontSize: '15px', fontWeight: 600, color: '#fff', margin: '8px 0 4px' }}>{renderInline(h3[1], i)}</div>);
       continue;
     }
 

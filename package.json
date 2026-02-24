@@ -1,12 +1,13 @@
 {
-  "name": "let-me-ai-that",
+  "name": "lmgpttfy",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
@@ -22,7 +23,7 @@
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "^14.2.18",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
